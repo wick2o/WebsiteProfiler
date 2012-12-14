@@ -25,6 +25,13 @@ except:
 	print 'Missing needed module: easy_install fpdf'
 	sys.exit()
 
+try:
+	import pygeoip
+except:
+	print 'Missing needed module: easy_install pygeoip'
+	sys.exit()
+
+
 js_functions = [ 'eval(', 'unescape(', 'alert(', 'collected_data' ]	
 
 profile = {}
@@ -240,7 +247,19 @@ def profile_whois(url):
 				profile['whois_expiration'] = c_line.split(':')[1].strip()
 				
 		profile['whois_nameserver'] = ','.join(ns)
-			
+		
+	gic = pygeoip.GeoIP('GeoLiteCity.dat')
+	data = gic.record_by_name(url)
+
+	profile['geoip_city'] = data['city']
+	profile['geoip_time_zone'] = data['time_zone']
+	profile['geoip_metro_code'] = data['metro_code']
+	profile['geoip_postal_code'] = data['postal_code']
+	profile['geoip_lat'] = data['latitude']
+	profile['geoip_long'] = data['longitude']
+	profile['geoip_country_name'] = data['country_name']
+	profile['geoip_area_code'] = data['area_code']
+	
 
 def generate_report():
 
@@ -266,6 +285,14 @@ def generate_report():
 	#whois_updated
 	#whois_creation
 	#whois_expiration
+	#geoip_city
+	#geoip_time_zone
+	#geoip_metro_code
+	#geoip_postal_code
+	#geoip_lat
+	#geoip_long
+	#geo_country_name
+	#geo_area_code
 
 	pdf = fpdf.FPDF('P','in','A4')
 	pdf.add_page()
@@ -334,7 +361,34 @@ def generate_report():
 	pdf.ln()
 	pdf.cell(0.3)
 	pdf.cell(0,0.2,'Expiration Date: %s' % (profile['whois_expiration']))
+	pdf.ln()
+	pdf.cell(0,0.2,'Geo Location Data:')
+	pdf.ln()
+	pdf.cell(0.3)
+	pdf.cell(0,0.2,'City: %s' % (profile['geoip_city']))
+	pdf.ln()
+	pdf.cell(0.3)
+	pdf.cell(0,0.2,'TimeZone: %s' % (profile['geoip_time_zone']))
+	pdf.ln()
+	pdf.cell(0.3)
+	pdf.cell(0,0.2,'Metro Code: %s' % (profile['geoip_metro_code']))
+	pdf.ln()
+	pdf.cell(0.3)
+	pdf.cell(0,0.2,'Postal Code: %s' % (profile['geoip_postal_code']))
+	pdf.ln()
+	pdf.cell(0.3)
+	pdf.cell(0,0.2,'Latitude: %s' % (profile['geoip_lat']))
+	pdf.ln()
+	pdf.cell(0.3)
+	pdf.cell(0,0.2,'Longitude: %s' % (profile['geoip_long']))
+	pdf.ln()
+	pdf.cell(0.3)
+	pdf.cell(0,0.2,'Country Name: %s' % (profile['geoip_country_name']))
+	pdf.ln()
+	pdf.cell(0.3)
+	pdf.cell(0,0.2,'Area Code: %s' % (profile['geoip_area_code']))
 
+	
 	
 	pdf.output('example_report.pdf', 'F')
 	
@@ -367,6 +421,8 @@ def main():
 	profile_whois(args.url)
 	
 	generate_report()
+	
+
 
 	page.close()
 
