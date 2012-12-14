@@ -7,35 +7,51 @@ import urllib2
 import random
 import socket
 
+halt = False
+
 try:
 	import argparse
-except:
+except ImportError:
 	print 'Missing needed module: easy_install argparse'
-	sys.exit()
+	halt = True
+
 
 try:
 	from BeautifulSoup import BeautifulSoup
-except:
+except ImportError:
 	print 'Missing needed module: easy_install beautifulsoup'
-	sys.exit()
+	halt = True
+
 	
 try:
 	import fpdf
-except:
+except ImportError:
 	print 'Missing needed module: easy_install fpdf'
-	sys.exit()
+	halt = True
 
 try:
 	import pygeoip
-except:
+except ImportError:
 	print 'Missing needed module: easy_install pygeoip'
+	halt = True
+
+try:
+	import dns.rdatatype
+	import dns.message
+	import dns.query
+except ImportError:
+	print 'Missing needed module: easy_install dnspython'
+	halt = True
+	
+if halt == True:
 	sys.exit()
 
 
-js_functions = [ 'eval(', 'unescape(', 'alert(', 'collected_data' ]	
+js_functions = [ 'eval(', 'unescape(', 'alert(' ]	
 
 profile = {}
 
+			
 
 def get_useragent():
 	user_agents = [	'Mozilla/6.0 (Windows NT 6.2; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1'
@@ -233,8 +249,6 @@ def profile_whois(url):
 				profile['whois_registrar'] = c_line.split(':')[1].strip()
 			elif 'Whois Server:' in c_line:
 				profile['whois_server'] = c_line.split(':')[1].strip()
-			elif 'Referral URL:' in c_line:
-				profile['whois_referral'] = c_line.split(':')[1].strip()
 			elif 'Name Server:' in c_line:
 				ns.append(c_line.split(':')[1].strip())
 			elif 'Status:' in c_line:
@@ -260,7 +274,20 @@ def profile_whois(url):
 	profile['geoip_country_name'] = data['country_name']
 	profile['geoip_area_code'] = data['area_code']
 	
+	message = dns.message.make_query(url, dns.rdatatype.ANY)
+	response = dns.query.udp(message, '8.8.8.8')
+	
+	res = []
 
+	for itm in response.answer:
+		for i in itm.to_text().split('\n'):
+			res.append(i)
+			
+	profile['dns_lookup'] = '\n'.join(res)
+
+		
+	
+	
 def generate_report():
 
 	#title
@@ -293,6 +320,7 @@ def generate_report():
 	#geoip_long
 	#geo_country_name
 	#geo_area_code
+	#dns_lookup
 
 	pdf = fpdf.FPDF('P','in','A4')
 	pdf.add_page()
@@ -345,9 +373,6 @@ def generate_report():
 	pdf.cell(0,0.2,'Whois Server: %s' % (profile['whois_server']))
 	pdf.ln()
 	pdf.cell(0.3)
-	pdf.cell(0,0.2,'Referral URL: %s' % (profile['whois_referral']))
-	pdf.ln()
-	pdf.cell(0.3)
 	pdf.cell(0,0.2,'Name Servers: %s' % (profile['whois_nameserver'].replace(',',', ')))
 	pdf.ln()
 	pdf.cell(0.3)
@@ -387,14 +412,20 @@ def generate_report():
 	pdf.ln()
 	pdf.cell(0.3)
 	pdf.cell(0,0.2,'Area Code: %s' % (profile['geoip_area_code']))
-
-	
-	
-	pdf.output('example_report.pdf', 'F')
-	
-	
+	pdf.ln()
+	pdf.cell(0,0.2,'DIG ANY Results:')
+	pdf.ln()
+	for itm in profile['dns_lookup'].split('\n'):
+		pdf.cell(0.3)
+		pdf.cell(0,0.2,itm)
+		pdf.ln()
+		
 
 		
+	
+
+	pdf.output('example_report.pdf', 'F')
+	
 def setup():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-u', '--url', action='store', dest='url', required=True, help='url ie: wwww.google.com')
@@ -420,9 +451,8 @@ def main():
 	profile_robots(args.url)
 	profile_whois(args.url)
 	
-	generate_report()
-	
 
+	generate_report()
 
 	page.close()
 
