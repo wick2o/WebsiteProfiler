@@ -48,10 +48,7 @@ if halt == True:
 
 
 js_functions = [ 'eval(', 'unescape(', 'alert(' ]	
-
 profile = {}
-
-			
 
 def get_useragent():
 	user_agents = [	'Mozilla/6.0 (Windows NT 6.2; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1'
@@ -81,11 +78,11 @@ def get_useragent():
 	return user_agents[random.randint(0, len(user_agents) - 1)]
 
 def get_referer():
-	referers = [ 'http://www.google.com',
- 				 'http://www.msn.com',
-				 'http://www.yahoo.com',
-				 'http://www.bing.com',
-				 'http://www.dailychanges.com',
+	referers = ['http://www.google.com',
+				'http://www.msn.com',
+				'http://www.yahoo.com',
+				'http://www.bing.com',
+				'http://www.dailychanges.com',
 			   ]
 	return referers[random.randint(0,len(referers) - 1)]
 	

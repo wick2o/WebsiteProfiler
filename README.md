@@ -15,7 +15,5 @@ WebsiteProfiler: Auto URL Recon
 Example Usage:
 ==============
 
-> URL Scan
-
     ./profiler.py -u http://www.stackoverflow.com
 
